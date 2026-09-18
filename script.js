@@ -71,7 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     // GOOGLE SHEETS - GUESTBOOK
     // ============================================
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrpLZGAR-GaBO6mbtMLw200I1L5CZ7EJVdiO51Mp-sTO90RghFO53usuIUJ78TQamnZg/exec';
+    // Transfer Google Sheet sang tài khoản khác sẽ hủy deployment cũ -> phải deploy lại
+    // và cập nhật URL này (xem docs/HUONG_DAN_GOOGLE_SHEETS.md).
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyZlBAtRK28EsIHJql7WcJxXIFpiFNS-wRXCT_pK3fDl0kxTT6_5wGSPwLjU_9GDzia1w/exec';
 
     const guestbookForm = document.getElementById('guestbook-form');
     const formMessage = document.getElementById('form-message');
@@ -117,19 +119,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadWishes() {
-        if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-            var sampleWishes = [
-                { name: 'Nguyễn Văn A', message: 'Chúc hai bạn trăm năm hạnh phúc!', timestamp: new Date(Date.now() - 86400000).toISOString() },
-                { name: 'Trần Thị B', message: 'Chúc mừng hạnh phúc!', timestamp: new Date(Date.now() - 172800000).toISOString() }
-            ];
-            sampleWishes.sort(function(a, b) { return new Date(a.timestamp) - new Date(b.timestamp); });
-            sampleWishes.forEach(function(wish) { addWishToDisplay(wish); });
-            return;
-        }
+        var wishesContainer = document.getElementById('wishes-container');
 
         fetch(GOOGLE_SCRIPT_URL)
-            .then(function(response) { return response.json(); })
+            .then(function(response) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.json();
+            })
             .then(function(wishes) {
+                // Apps Script hỏng trả về trang HTML thay vì JSON
+                if (!Array.isArray(wishes)) throw new Error('Phản hồi không phải danh sách lời chúc');
+                if (wishesContainer) wishesContainer.innerHTML = '';
                 wishes.sort(function(a, b) { return new Date(a.timestamp) - new Date(b.timestamp); });
                 wishes.forEach(function(wish) { addWishToDisplay(wish); });
             })
